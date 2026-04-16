@@ -259,6 +259,7 @@ input[type=range]::-webkit-slider-thumb{
     <div class="spinner" id="spinner"></div>
     <div class="errmsg" id="errMsg"></div>
     <button class="cbtn" onclick="conectar()">CONECTAR</button>
+    <button class="cbtn" style="background:rgba(0,232,122,0.08);border-color:rgba(0,232,122,0.4);color:#00e87a;margin-top:-8px;" onclick="modoDemo()">▶ MODO DEMO (sin robot)</button>
     <div class="hint">
       1· Conectate a la red WiFi del colegio<br>
       2· Ingresá la IP de tu robot<br>
@@ -406,29 +407,33 @@ input[type=range]::-webkit-slider-thumb{
     robotIP = ip;
     showErr('');
     document.getElementById('spinner').style.display = 'block';
-    document.querySelector('.cbtn').style.opacity = '0.5';
+    document.querySelectorAll('.cbtn').forEach(b => b.style.opacity = '0.5');
 
     try {
       const r = await fetch(`http://${robotIP}/?State=S`, {signal: AbortSignal.timeout(3000)});
-      if (r.ok || r.status === 200) {
-        irAControl();
-      } else {
-        showErr('Robot no responde · Verificar IP');
-      }
+      setConnected(r.ok || r.status === 200);
     } catch(e) {
-      showErr('No se puede conectar · ¿Misma red WiFi?');
+      setConnected(false);
     }
     document.getElementById('spinner').style.display = 'none';
-    document.querySelector('.cbtn').style.opacity = '1';
+    document.querySelectorAll('.cbtn').forEach(b => b.style.opacity = '1');
+    irAControl(); // Entrar siempre, con o sin robot
+  }
+
+  function modoDemo() {
+    robotIP = 'DEMO';
+    setConnected(false);
+    irAControl();
   }
 
   function irAControl() {
     document.getElementById('scConnect').classList.add('hidden');
     document.getElementById('scGame').classList.remove('hidden');
-    document.getElementById('hipShow').textContent = robotIP;
-    setConnected(true);
-    iniciarPing();
-    localStorage.setItem('ctc_last_ip', robotIP);
+    document.getElementById('hipShow').textContent = robotIP === 'DEMO' ? 'DEMO' : robotIP;
+    if (robotIP !== 'DEMO') {
+      iniciarPing();
+      localStorage.setItem('ctc_last_ip', robotIP);
+    }
   }
 
   function desconectar() {
